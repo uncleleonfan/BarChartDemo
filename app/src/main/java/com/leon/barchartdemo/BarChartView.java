@@ -38,6 +38,10 @@ public class BarChartView extends View {
     private int mHeight;
     private int mWidth;
 
+    private int mBarGrowStep = 10;
+    private boolean enableGrowAnimation = true;
+    private static final int DELAY = 50;
+
     public BarChartView(Context context) {
         this(context, null);
     }
@@ -80,6 +84,7 @@ public class BarChartView extends View {
             bar.top = (int) (getPaddingTop() + barHeight - mTransformDataList[i]);
             bar.right = (int) (barLeft + mBarWidth);
             bar.bottom = barHeight;
+            bar.currentTop = bar.bottom;
             mBars.add(bar);
 
             axisStart = axisStart + step;
@@ -90,6 +95,38 @@ public class BarChartView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        if (enableGrowAnimation) {
+            drawBarsWidthAnimation(canvas);
+        } else {
+            drawBars(canvas);
+        }
+    }
+
+
+    private void drawBarsWidthAnimation(Canvas canvas) {
+        int minTop = getHeight();
+        for (int i = 0; i < mDataList.length; i++) {
+            Bar bar = mBars.get(i);
+            String axis = mHorizontalAxis[i];
+            canvas.drawText(axis, bar.left + mBarWidth / 2, mHeight, mAxisPaint);
+
+            bar.currentTop -= mBarGrowStep;
+            bar.done = bar.currentTop <= bar.top;
+            if (bar.done) {
+                bar.currentTop = bar.top;
+                minTop = bar.top;
+            }
+            mTemp.set(bar.left, bar.currentTop, bar.right, bar.bottom);
+            canvas.drawRoundRect(mTemp, mRadius, mRadius, mBarPaint);
+        }
+
+        if (minTop > getPaddingTop()) {
+            postInvalidateDelayed(DELAY);
+        }
+    }
+
+
+    private void drawBars(Canvas canvas) {
         for (int i = 0; i < mDataList.length; i++) {
             Bar bar = mBars.get(i);
             String axis = mHorizontalAxis[i];
@@ -114,6 +151,7 @@ public class BarChartView extends View {
         int top;
         int right;
         int bottom;
-        public int currentTop;
+        int currentTop;
+        boolean done = false;
     }
 }

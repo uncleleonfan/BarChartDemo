@@ -8,20 +8,19 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BarChartView extends View {
 
     private static final String TAG = "BarChartView";
 
-    private final Paint mbarPaint;
-    private int mWidth;
-    private int mHeight;
+    private final Paint mBarPaint;
 
     private float mMax;
-    private float mHeightRatio;
 
     private float[] mDataList;
     private float[] mTransformDataList;
@@ -29,12 +28,15 @@ public class BarChartView extends View {
     private String[] mVerticalAxis;
     private float mBarWidth;
     private int mGap;
-
-    private int mStep;
     private Paint mAxisPaint;
 
     private Rect mTextRect;
     private RectF mTemp;
+    private int mRadius;
+
+    private List<Bar> mBars = new ArrayList<Bar>();
+    private int mHeight;
+    private int mWidth;
 
     public BarChartView(Context context) {
         this(context, null);
@@ -47,9 +49,9 @@ public class BarChartView extends View {
         mAxisPaint.setTextSize(20);
         mAxisPaint.setTextAlign(Paint.Align.CENTER);
 
-        mbarPaint = new Paint();
-        mbarPaint.setColor(Color.BLUE);
-        mbarPaint.setAntiAlias(true);
+        mBarPaint = new Paint();
+        mBarPaint.setColor(Color.BLUE);
+        mBarPaint.setAntiAlias(true);
 
         mTextRect = new Rect();
         mTemp = new RectF();
@@ -59,36 +61,41 @@ public class BarChartView extends View {
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+        mBars.clear();
         mWidth = w - getPaddingLeft() - getPaddingRight();
         mHeight = h - getPaddingTop() - getPaddingBottom();
-        Log.d(TAG, "onSizeChanged: " + w + " " + h + " " + mWidth + " " + mHeight);
-        mStep = mWidth / mDataList.length;
+        int step = mWidth / mDataList.length;
+
+        int axisStart = step / 2;
+        mRadius = (int) (mBarWidth / 2);
+        int barLeft = (int) (axisStart - mRadius);
+        mAxisPaint.getTextBounds(mHorizontalAxis[0], 0, mHorizontalAxis[0].length(), mTextRect);
+        int barHeight = mHeight - mTextRect.height() - mGap;
+        float heightRatio = barHeight / mMax;
+
+        for (int i = 0; i < mDataList.length; i++) {
+            mTransformDataList[i] = mDataList[i] * heightRatio;
+            Bar bar = new Bar();
+            bar.left = barLeft;
+            bar.top = (int) (getPaddingTop() + barHeight - mTransformDataList[i]);
+            bar.right = (int) (barLeft + mBarWidth);
+            bar.bottom = barHeight;
+            mBars.add(bar);
+
+            axisStart = axisStart + step;
+            barLeft = (int) (axisStart - mBarWidth / 2);;
+        }
 
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        int axisStart = mStep / 2;
-        int radius = (int) (mBarWidth / 2);
-        int barLeft = (int) (axisStart - radius);
-        mAxisPaint.getTextBounds(mHorizontalAxis[0], 0, mHorizontalAxis[0].length(), mTextRect);
-
-        int barHeight = mHeight - mTextRect.height() - mGap;
-        mHeightRatio = barHeight / mMax;
-
         for (int i = 0; i < mDataList.length; i++) {
+            Bar bar = mBars.get(i);
             String axis = mHorizontalAxis[i];
-            canvas.drawText(axis, axisStart, mHeight, mAxisPaint);
-            mTransformDataList[i] = mDataList[i] * mHeightRatio;
-            int top = (int) (barHeight - mTransformDataList[i] + getPaddingTop());
-            int right = (int) (barLeft + mBarWidth);
-//            canvas.drawRect(barLeft, top, right, barHeight, mbarPaint);
-            mTemp.set(barLeft, top, right, barHeight);
-            canvas.drawRoundRect(mTemp, radius, radius, mbarPaint);
-            axisStart += mStep;
-            barLeft = (int) (axisStart - mBarWidth / 2);;
-
+            canvas.drawText(axis, bar.left + mBarWidth / 2, mHeight, mAxisPaint);
+            mTemp.set(bar.left, bar.top, bar.right, bar.bottom);
+            canvas.drawRoundRect(mTemp, mRadius, mRadius, mBarPaint);
         }
     }
 
@@ -102,7 +109,11 @@ public class BarChartView extends View {
         mMax = max;
     }
 
-    public void setMax(float max) {
-        mMax = max;
+    private class Bar {
+        int left;
+        int top;
+        int right;
+        int bottom;
+        public int currentTop;
     }
 }

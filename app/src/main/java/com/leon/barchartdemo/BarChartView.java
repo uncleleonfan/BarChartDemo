@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -33,6 +34,7 @@ public class BarChartView extends View {
     private Paint mAxisPaint;
 
     private Rect mTextRect;
+    private RectF mTemp;
 
     public BarChartView(Context context) {
         this(context, null);
@@ -47,11 +49,12 @@ public class BarChartView extends View {
 
         mbarPaint = new Paint();
         mbarPaint.setColor(Color.BLUE);
+        mbarPaint.setAntiAlias(true);
 
         mTextRect = new Rect();
+        mTemp = new RectF();
         mBarWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
-
-        mGap = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        mGap = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics());
     }
 
     @Override
@@ -67,7 +70,8 @@ public class BarChartView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         int axisStart = mStep / 2;
-        int barLeft = (int) (axisStart - mBarWidth / 2);
+        int radius = (int) (mBarWidth / 2);
+        int barLeft = (int) (axisStart - radius);
         mAxisPaint.getTextBounds(mHorizontalAxis[0], 0, mHorizontalAxis[0].length(), mTextRect);
 
         int barHeight = mHeight - mTextRect.height() - mGap;
@@ -79,7 +83,9 @@ public class BarChartView extends View {
             mTransformDataList[i] = mDataList[i] * mHeightRatio;
             int top = (int) (barHeight - mTransformDataList[i] + getPaddingTop());
             int right = (int) (barLeft + mBarWidth);
-            canvas.drawRect(barLeft, top, right, barHeight, mbarPaint);
+//            canvas.drawRect(barLeft, top, right, barHeight, mbarPaint);
+            mTemp.set(barLeft, top, right, barHeight);
+            canvas.drawRoundRect(mTemp, radius, radius, mbarPaint);
             axisStart += mStep;
             barLeft = (int) (axisStart - mBarWidth / 2);;
 

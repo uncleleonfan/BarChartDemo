@@ -43,7 +43,6 @@ public class BarChartView extends View {
     private boolean enableGrowAnimation = true;
     private static final int DELAY = 50;
 
-
     private int mSelectedIndex = -1;
 
     public BarChartView(Context context) {
@@ -117,7 +116,9 @@ public class BarChartView extends View {
             bar.done = bar.currentTop <= bar.top;
             if (bar.done) {
                 bar.currentTop = bar.top;
-                minTop = bar.top;
+                if (bar.top < minTop) {
+                    minTop = bar.top;
+                }
             }
             mTemp.set(bar.left, bar.currentTop, bar.right, bar.bottom);
             canvas.drawRoundRect(mTemp, mRadius, mRadius, mBarPaint);
@@ -125,7 +126,11 @@ public class BarChartView extends View {
 
         if (minTop > getPaddingTop()) {
             postInvalidateDelayed(DELAY);
+        } else {
+            //动画结束
+            enableGrowAnimation = false;
         }
+
     }
 
 
@@ -169,6 +174,9 @@ public class BarChartView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (enableGrowAnimation) {
+            return false;
+        }
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 for (int i = 0; i < mBars.size(); i++) {

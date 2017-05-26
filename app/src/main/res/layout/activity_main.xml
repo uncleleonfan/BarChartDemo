@@ -10,7 +10,7 @@
     <com.leon.barchartdemo.BarChartView
         android:id="@+id/bar_chart"
         android:layout_width="match_parent"
-        android:paddingTop="8dp"
+        android:paddingTop="20dp"
         android:layout_height="300dp"/>
 
 </FrameLayout>

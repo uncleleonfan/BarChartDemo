@@ -24,7 +24,6 @@ public class BarChartView extends View {
     private float mMax;
 
     private float[] mDataList;
-    private float[] mTransformDataList;
     private String[] mHorizontalAxis;
     private String[] mVerticalAxis;
     private float mBarWidth;
@@ -36,8 +35,6 @@ public class BarChartView extends View {
     private int mRadius;
 
     private List<Bar> mBars = new ArrayList<Bar>();
-    private int mHeight;
-    private int mWidth;
 
     private int mBarGrowStep = 10;
     private boolean enableGrowAnimation = true;
@@ -69,28 +66,31 @@ public class BarChartView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         mBars.clear();
-        mWidth = w - getPaddingLeft() - getPaddingRight();
-        mHeight = h - getPaddingTop() - getPaddingBottom();
-        int step = mWidth / mDataList.length;
+        int width = w - getPaddingLeft() - getPaddingRight();
+        int height = h - getPaddingTop() - getPaddingBottom();
+        int step = width / mDataList.length;
 
         int axisStart = step / 2;
         mRadius = (int) (mBarWidth / 2);
-        int barLeft = (int) (axisStart - mRadius);
+        int barLeft = axisStart - mRadius;
         mAxisPaint.getTextBounds(mHorizontalAxis[0], 0, mHorizontalAxis[0].length(), mTextRect);
-        int barHeight = mHeight - mTextRect.height() - mGap;
+        int barHeight = height - mTextRect.height() - mGap;
         float heightRatio = barHeight / mMax;
 
         for (int i = 0; i < mDataList.length; i++) {
-            mTransformDataList[i] = mDataList[i] * heightRatio;
             Bar bar = new Bar();
+            bar.value = mDataList[i];
+            bar.transformedValue = bar.value * heightRatio;
+
             bar.left = barLeft;
-            bar.top = (int) (getPaddingTop() + barHeight - mTransformDataList[i]);
+            bar.top = (int) (getPaddingTop() + barHeight - bar.transformedValue);
             bar.right = (int) (barLeft + mBarWidth);
             bar.bottom = getPaddingTop() + barHeight;
             bar.currentTop = bar.bottom;
+
             mBars.add(bar);
             axisStart = axisStart + step;
-            barLeft = (int) (axisStart - mBarWidth / 2);;
+            barLeft = (int) (axisStart - mBarWidth / 2);
         }
 
     }
@@ -142,6 +142,9 @@ public class BarChartView extends View {
             mTemp.set(bar.left, bar.top, bar.right, bar.bottom);
             if (i == mSelectedIndex) {
                 mBarPaint.setColor(Color.RED);
+                float x = bar.left + mBarWidth / 2;
+                float y = bar.top - mGap;
+                canvas.drawText(String.valueOf(bar.value), x, y, mAxisPaint);
             } else {
                 mBarPaint.setColor(Color.BLUE);
             }
@@ -155,7 +158,6 @@ public class BarChartView extends View {
 
     public void setDataList(float[] dataList, int max) {
         mDataList = dataList;
-        mTransformDataList = new float[mDataList.length];
         mMax = max;
     }
 
@@ -165,6 +167,8 @@ public class BarChartView extends View {
         int right;
         int bottom;
         int currentTop;
+        float value;
+        float transformedValue;
         boolean done = false;
 
         boolean isInside(float x, float y) {

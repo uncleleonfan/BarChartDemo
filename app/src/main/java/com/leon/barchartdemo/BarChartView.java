@@ -60,7 +60,7 @@ public class BarChartView extends View {
         mTextRect = new Rect();
         mTemp = new RectF();
         mBarWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
-        mGap = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics());
+        mGap = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
     }
 
     @Override
@@ -83,10 +83,9 @@ public class BarChartView extends View {
             bar.left = barLeft;
             bar.top = (int) (getPaddingTop() + barHeight - mTransformDataList[i]);
             bar.right = (int) (barLeft + mBarWidth);
-            bar.bottom = barHeight;
+            bar.bottom = getPaddingTop() + barHeight;
             bar.currentTop = bar.bottom;
             mBars.add(bar);
-
             axisStart = axisStart + step;
             barLeft = (int) (axisStart - mBarWidth / 2);;
         }
@@ -108,7 +107,7 @@ public class BarChartView extends View {
         for (int i = 0; i < mDataList.length; i++) {
             Bar bar = mBars.get(i);
             String axis = mHorizontalAxis[i];
-            canvas.drawText(axis, bar.left + mBarWidth / 2, mHeight, mAxisPaint);
+            canvas.drawText(axis, bar.left + mBarWidth / 2, getHeight() - getPaddingBottom(), mAxisPaint);
 
             bar.currentTop -= mBarGrowStep;
             bar.done = bar.currentTop <= bar.top;

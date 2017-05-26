@@ -5,8 +5,8 @@ import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String[] HORIZONTAL_AXIS= {"一", "二", "三", "四",
-            "五", "六", "七", "八", "九", "十", "十一", "十二"};
+    private static final String[] HORIZONTAL_AXIS= {"1", "2", "3", "4",
+            "5", "6", "7", "8", "9", "10", "11", "12"};
 
     private static final float[] DATA = {12, 24, 45, 56, 89, 70, 49, 22, 23, 10, 12, 3};
 

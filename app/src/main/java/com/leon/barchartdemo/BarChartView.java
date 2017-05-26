@@ -9,6 +9,7 @@ import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -41,6 +42,9 @@ public class BarChartView extends View {
     private int mBarGrowStep = 10;
     private boolean enableGrowAnimation = true;
     private static final int DELAY = 50;
+
+
+    private int mSelectedIndex = -1;
 
     public BarChartView(Context context) {
         this(context, null);
@@ -129,8 +133,13 @@ public class BarChartView extends View {
         for (int i = 0; i < mDataList.length; i++) {
             Bar bar = mBars.get(i);
             String axis = mHorizontalAxis[i];
-            canvas.drawText(axis, bar.left + mBarWidth / 2, mHeight, mAxisPaint);
+            canvas.drawText(axis, bar.left + mBarWidth / 2, getHeight() - getPaddingBottom(), mAxisPaint);
             mTemp.set(bar.left, bar.top, bar.right, bar.bottom);
+            if (i == mSelectedIndex) {
+                mBarPaint.setColor(Color.RED);
+            } else {
+                mBarPaint.setColor(Color.BLUE);
+            }
             canvas.drawRoundRect(mTemp, mRadius, mRadius, mBarPaint);
         }
     }
@@ -152,5 +161,31 @@ public class BarChartView extends View {
         int bottom;
         int currentTop;
         boolean done = false;
+
+        boolean isInside(float x, float y) {
+            return x > left && x < right && y > top && y < bottom;
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                for (int i = 0; i < mBars.size(); i++) {
+                    if (mBars.get(i).isInside(event.getX(), event.getY())) {
+                        enableGrowAnimation = false;
+                        mSelectedIndex = i;
+                        invalidate();
+                        break;
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                mSelectedIndex = -1;
+                enableGrowAnimation = false;
+                invalidate();
+                break;
+        }
+        return true;
     }
 }

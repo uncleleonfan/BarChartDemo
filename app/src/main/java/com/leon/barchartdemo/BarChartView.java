@@ -263,4 +263,12 @@ public class BarChartView extends View {
         }
         return true;
     }
+
+    public void setSelectedIndex(int selectedIndex) {
+        mSelectedIndex = selectedIndex;
+    }
+
+    public void setEnableGrowAnimation(boolean enableGrowAnimation) {
+        this.enableGrowAnimation = enableGrowAnimation;
+    }
 }

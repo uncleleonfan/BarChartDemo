@@ -32,10 +32,10 @@ public class BarChartView extends View {
     private int mGap;//坐标文本与柱状条之间间隔的变量
     private int mRadius;
     private int mSelectedIndex = -1;
-    private int mBarGrowStep = 15;
     private boolean enableGrowAnimation = true;
 
     private static final int DELAY = 10;
+    private static final int BAR_GROW_STEP = 15;//柱状条增长动画步长
 
     private Rect mTextRect;
     private RectF mTemp;
@@ -63,7 +63,9 @@ public class BarChartView extends View {
 
         mTextRect = new Rect();
         mTemp = new RectF();
+        //柱状条宽度 默认8dp
         mBarWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        //柱状条与坐标文本之间的间隔大小，默认8dp
         mGap = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
     }
 
@@ -87,7 +89,7 @@ public class BarChartView extends View {
         //通过坐标文本画笔计算绘制x轴第一个坐标文本占据的矩形边界，这里主要获取其高度，为计算maxBarHeight提供数据
         mAxisPaint.getTextBounds(mHorizontalAxis[0], 0, mHorizontalAxis[0].length(), mTextRect);
 
-        //计算柱状条高度的最大像素大小，mTextRect.height为底部x轴坐标文本的高度，mGap为坐标文本与柱状条之间间隔的变量
+        //计算柱状条高度的最大像素大小，mTextRect.height为底部x轴坐标文本的高度，mGap为坐标文本与柱状条之间间隔大小的变量
         int maxBarHeight = height - mTextRect.height() - mGap;
 
         //计算柱状条最大像素大小与最大数据值的比值
@@ -127,30 +129,43 @@ public class BarChartView extends View {
     }
 
 
+    /**
+     * 绘制柱状条，带自增长动画
+     */
     private void drawBarsWidthAnimation(Canvas canvas) {
-        int minTop = getHeight();
+        //遍历所有的Bar
         for (int i = 0; i < mDataList.length; i++) {
             Bar bar = mBars.get(i);
-            String axis = mHorizontalAxis[i];
-            canvas.drawText(axis, bar.left + mBarWidth / 2, getHeight() - getPaddingBottom(), mAxisPaint);
 
-            bar.currentTop -= mBarGrowStep;
-            bar.done = bar.currentTop <= bar.top;
-            if (bar.done) {
+            //绘制坐标文本
+            String axis = mHorizontalAxis[i];
+            float textX = bar.left + mRadius;
+            float textY = getHeight() - getPaddingBottom();
+            canvas.drawText(axis, textX, textY, mAxisPaint);
+
+            //更新当前柱状条顶部位置变量，BAR_GROW_STEP为柱状条增长的步长，即让柱状条长高BAR_GROW_STEP长度
+            bar.currentTop -= BAR_GROW_STEP;
+
+            //当计算出来的currentTop小于柱状条本来的top值时，说明越界了
+            if (bar.currentTop <= bar.top) {
+                //将currentTop重置成本来的top值，解决越界问题
                 bar.currentTop = bar.top;
-                if (bar.top < minTop) {
-                    minTop = bar.top;
+
+                //高度最高的柱状条的顶部位置为paddingTop，如果currentTop等于paddingTop，说明高度最高的进度条也到达
+                //其最高点，可以停止增长动画了，于是将enableGrowAnimation置为false
+                if (bar.currentTop == getPaddingTop()) {
+                    enableGrowAnimation = false;
                 }
             }
+
+            //绘制圆角柱状条
             mTemp.set(bar.left, bar.currentTop, bar.right, bar.bottom);
             canvas.drawRoundRect(mTemp, mRadius, mRadius, mBarPaint);
         }
 
-        if (minTop > getPaddingTop()) {
+        //延时触发重新绘制，调用onDraw方法
+        if (enableGrowAnimation) {
             postInvalidateDelayed(DELAY);
-        } else {
-            //动画结束
-            enableGrowAnimation = false;
         }
     }
 
@@ -162,13 +177,13 @@ public class BarChartView extends View {
         //遍历所有的Bar对象，一个个绘制
         for (int i = 0; i < mBars.size(); i++) {
             Bar bar = mBars.get(i);
-
             //绘制底部x轴坐标文本
             String axis = mHorizontalAxis[i];//获取对应位置的坐标文本
             //计算绘制文本的起始位置坐标(textX，textY)，textX为柱状条的中线位置，由于我们对画笔mAxisPaint设置了
             //Paint.Align.CENTER，所以绘制出来的文本的中线与柱状条的中线是重合的
             float textX = bar.left + mRadius;
             float textY = getHeight() - getPaddingBottom();
+            //绘制坐标文本
             canvas.drawText(axis, textX, textY, mAxisPaint);
 
             if (i == mSelectedIndex) {
@@ -179,6 +194,7 @@ public class BarChartView extends View {
             } else {
                 mBarPaint.setColor(Color.BLUE);
             }
+            //设置柱状条矩形
             mTemp.set(bar.left, bar.top, bar.right, bar.bottom);
             //绘制圆角矩形
             canvas.drawRoundRect(mTemp, mRadius, mRadius, mBarPaint);
@@ -216,8 +232,7 @@ public class BarChartView extends View {
         float value;//柱状条原始数据的大小
         float transformedValue;//柱状条原始数据大小转换成对应的像素大小
 
-        int currentTop;//柱状图动画中会用到，表示当前柱状条当前的top值，取值范围为0到top
-        boolean done = false;//动画是否结束
+        int currentTop;//柱状图动画中用到，表示柱状条动画过程中顶部位置的变量，取值范围为[0,top]
 
         boolean isInside(float x, float y) {
             return x > left && x < right && y > top && y < bottom;

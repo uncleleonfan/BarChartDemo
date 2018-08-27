@@ -79,7 +79,7 @@ public class BarChartView extends View {
         int height = h - getPaddingTop() - getPaddingBottom();
 
         //按照数据集合的大小平分宽度
-        int step = width / mDataList.length;
+        step = width / mDataList.length;
 
         //mBarWidth为柱状条宽度的变量，可以设置，mRadius为柱状条宽度的一半
         mRadius = (int) (mBarWidth / 2);

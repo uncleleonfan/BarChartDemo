@@ -30,6 +30,7 @@ public class BarChartView extends View {
     private float mBarWidth;
     private float mMax;//数据集合的最大值
     private int mGap;//坐标文本与柱状条之间间隔的变量
+    private int step;//将水平区域分成的每份的宽度，用于触摸事件
     private int mRadius;
     private int mSelectedIndex = -1;
     private boolean enableGrowAnimation = true;
@@ -246,13 +247,14 @@ public class BarChartView extends View {
         }
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                for (int i = 0; i < mBars.size(); i++) {
-                    if (mBars.get(i).isInside(event.getX(), event.getY())) {
-                        enableGrowAnimation = false;
-                        mSelectedIndex = i;
-                        invalidate();
-                        break;
-                    }
+            case MotionEvent.ACTION_MOVE:
+                // 扩大柱状条触摸的识别范围，根据 x 轴落在哪个分区
+                int touchIndex = (int) ((event.getX() - getPaddingLeft()) / step);
+                // 仅仅当 mSelectedIndex 发生变化时才重绘
+                if (touchIndex < mBars.size() && touchIndex != mSelectedIndex) {
+                    mSelectedIndex = touchIndex;
+                    enableGrowAnimation = false;
+                    invalidate();
                 }
                 break;
             case MotionEvent.ACTION_UP:
